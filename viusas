@@ -1,1 +1,397 @@
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local player = Players.LocalPlayer
 
+--COLOR PALETTE 
+local COLOR_BG        = Color3.fromRGB(18, 18, 20)   -- main background
+local COLOR_PANEL     = Color3.fromRGB(28, 28, 32)   -- panel background
+local COLOR_PANEL_2   = Color3.fromRGB(36, 36, 40)   -- lighter panel
+local COLOR_BORDER    = Color3.fromRGB(50, 50, 55)
+local COLOR_TEXT      = Color3.fromRGB(230, 230, 230)
+local COLOR_SUBTEXT   = Color3.fromRGB(150, 150, 155)
+local COLOR_TOGGLE_ON = Color3.fromRGB(80, 200, 120)  -- subtle green (optional pop)
+local COLOR_TOGGLE_OFF= Color3.fromRGB(60, 60, 65)
+local COLOR_TOGGLE_LOCKED = Color3.fromRGB(42, 42, 46)
+local COLOR_LABEL_LOCKED  = Color3.fromRGB(95, 95, 100)
+
+--SCREEN GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "NeroScriptUI"
+screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+--MAIN FRAME
+local main = Instance.new("Frame")
+main.Name = "Main"
+main.Size = UDim2.new(0, 280, 0, 360)
+main.Position = UDim2.new(0.5, -140, 0.5, -180)
+main.BackgroundColor3 = COLOR_BG
+main.BorderSizePixel = 0
+main.Parent = screenGui
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 12)
+mainCorner.Parent = main
+
+local mainStroke = Instance.new("UIStroke")
+mainStroke.Color = COLOR_BORDER
+mainStroke.Thickness = 1
+mainStroke.Parent = main
+
+--TITLE BAR
+local titleBar = Instance.new("Frame")
+titleBar.Name = "TitleBar"
+titleBar.Size = UDim2.new(1, 0, 0, 40)
+titleBar.BackgroundColor3 = COLOR_PANEL
+titleBar.BorderSizePixel = 0
+titleBar.Parent = main
+
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 12)
+titleCorner.Parent = titleBar
+
+local titleFix = Instance.new("Frame")
+titleFix.BackgroundColor3 = COLOR_PANEL
+titleFix.BorderSizePixel = 0
+titleFix.Size = UDim2.new(1, 0, 0, 12)
+titleFix.Position = UDim2.new(0, 0, 1, -12)
+titleFix.Parent = titleBar
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Name = "Title"
+titleLabel.BackgroundTransparency = 1
+titleLabel.Size = UDim2.new(1, -20, 1, 0)
+titleLabel.Position = UDim2.new(0, 15, 0, 0)
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.Text = "NERO SCRIPT"
+titleLabel.TextColor3 = COLOR_TEXT
+titleLabel.TextSize = 16
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.Parent = titleBar
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Name = "Close"
+closeBtn.Size = UDim2.new(0, 24, 0, 24)
+closeBtn.Position = UDim2.new(1, -32, 0.5, -12)
+closeBtn.BackgroundColor3 = COLOR_PANEL_2
+closeBtn.Text = "X"
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 12
+closeBtn.TextColor3 = COLOR_SUBTEXT
+closeBtn.AutoButtonColor = true
+closeBtn.Parent = titleBar
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 6)
+closeCorner.Parent = closeBtn
+
+closeBtn.MouseButton1Click:Connect(function()
+	screenGui.Enabled = false
+end)
+
+--PROFILE THUMBNAIL
+local thumbHolder = Instance.new("Frame")
+thumbHolder.Name = "ThumbHolder"
+thumbHolder.Size = UDim2.new(0, 90, 0, 90)
+thumbHolder.Position = UDim2.new(0.5, -45, 0, 60)
+thumbHolder.BackgroundColor3 = COLOR_PANEL
+thumbHolder.Parent = main
+
+local thumbCorner = Instance.new("UICorner")
+thumbCorner.CornerRadius = UDim.new(1, 0)
+thumbCorner.Parent = thumbHolder
+
+local thumbStroke = Instance.new("UIStroke")
+thumbStroke.Color = COLOR_BORDER
+thumbStroke.Thickness = 2
+thumbStroke.Parent = thumbHolder
+
+local thumbImage = Instance.new("ImageLabel")
+thumbImage.Name = "ProfileImage"
+thumbImage.Size = UDim2.new(1, -6, 1, -6)
+thumbImage.Position = UDim2.new(0, 3, 0, 3)
+thumbImage.BackgroundTransparency = 1
+thumbImage.Image = "" -- default empty
+thumbImage.Parent = thumbHolder
+
+local thumbImgCorner = Instance.new("UICorner")
+thumbImgCorner.CornerRadius = UDim.new(1, 0)
+thumbImgCorner.Parent = thumbImage
+
+-- "Detecting..." loading label, sits on top of the thumbnail
+local detectingLabel = Instance.new("TextLabel")
+detectingLabel.Name = "DetectingLabel"
+detectingLabel.BackgroundTransparency = 1
+detectingLabel.Size = UDim2.new(1, 0, 1, 0)
+detectingLabel.Font = Enum.Font.GothamMedium
+detectingLabel.Text = ""
+detectingLabel.TextColor3 = COLOR_SUBTEXT
+detectingLabel.TextSize = 12
+detectingLabel.TextWrapped = true
+detectingLabel.Visible = false
+detectingLabel.ZIndex = 2
+detectingLabel.Parent = thumbHolder
+
+--USERNAME INPUT
+local inputHolder = Instance.new("Frame")
+inputHolder.Name = "InputHolder"
+inputHolder.Size = UDim2.new(1, -30, 0, 34)
+inputHolder.Position = UDim2.new(0.5, 0, 0, 160)
+inputHolder.AnchorPoint = Vector2.new(0.5, 0)
+inputHolder.BackgroundColor3 = COLOR_PANEL
+inputHolder.Parent = main
+
+local inputCorner = Instance.new("UICorner")
+inputCorner.CornerRadius = UDim.new(0, 8)
+inputCorner.Parent = inputHolder
+
+local inputStroke = Instance.new("UIStroke")
+inputStroke.Color = COLOR_BORDER
+inputStroke.Thickness = 1
+inputStroke.Parent = inputHolder
+
+local usernameBox = Instance.new("TextBox")
+usernameBox.Name = "UsernameInput"
+usernameBox.Size = UDim2.new(1, -20, 1, 0)
+usernameBox.Position = UDim2.new(0, 10, 0, 0)
+usernameBox.BackgroundTransparency = 1
+usernameBox.PlaceholderText = "Enter Roblox username..."
+usernameBox.PlaceholderColor3 = COLOR_SUBTEXT
+usernameBox.Text = ""
+usernameBox.Font = Enum.Font.Gotham
+usernameBox.TextSize = 14
+usernameBox.TextColor3 = COLOR_TEXT
+usernameBox.TextXAlignment = Enum.TextXAlignment.Left
+usernameBox.ClearTextOnFocus = false
+usernameBox.Parent = inputHolder
+
+--TOGGLE FACTORY (with lock/unlock support)
+local toggles = {} -- keep references so we can unlock them later
+
+local function createToggle(labelText, yPos)
+	local holder = Instance.new("Frame")
+	holder.Name = "Toggle_" .. labelText
+	holder.Size = UDim2.new(1, -30, 0, 40)
+	holder.Position = UDim2.new(0.5, 0, 0, yPos)
+	holder.AnchorPoint = Vector2.new(0.5, 0)
+	holder.BackgroundColor3 = COLOR_PANEL
+	holder.Parent = main
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 8)
+	corner.Parent = holder
+
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = COLOR_BORDER
+	stroke.Thickness = 1
+	stroke.Parent = holder
+
+	local label = Instance.new("TextLabel")
+	label.BackgroundTransparency = 1
+	label.Size = UDim2.new(0.5, 0, 1, 0)
+	label.Position = UDim2.new(0, 15, 0, 0)
+	label.Font = Enum.Font.Gotham
+	label.Text = labelText
+	label.TextColor3 = COLOR_LABEL_LOCKED
+	label.TextSize = 14
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.Parent = holder
+
+	local switchBg = Instance.new("Frame")
+	switchBg.Size = UDim2.new(0, 44, 0, 22)
+	switchBg.Position = UDim2.new(1, -55, 0.5, -11)
+	switchBg.BackgroundColor3 = COLOR_TOGGLE_LOCKED
+	switchBg.Parent = holder
+
+	local switchCorner = Instance.new("UICorner")
+	switchCorner.CornerRadius = UDim.new(1, 0)
+	switchCorner.Parent = switchBg
+
+	local knob = Instance.new("Frame")
+	knob.Size = UDim2.new(0, 18, 0, 18)
+	knob.Position = UDim2.new(0, 2, 0.5, -9)
+	knob.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
+	knob.Parent = switchBg
+
+	local knobCorner = Instance.new("UICorner")
+	knobCorner.CornerRadius = UDim.new(1, 0)
+	knobCorner.Parent = knob
+
+	local clickBtn = Instance.new("TextButton")
+	clickBtn.Size = UDim2.new(1, 0, 1, 0)
+	clickBtn.BackgroundTransparency = 1
+	clickBtn.Text = ""
+	clickBtn.Active = false -- locked by default
+	clickBtn.Parent = switchBg
+
+	local state = false
+	local unlocked = false
+
+	clickBtn.MouseButton1Click:Connect(function()
+		if not unlocked then return end -- extra safety check
+
+		state = not state
+		local targetPos = state and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)
+		local targetColor = state and COLOR_TOGGLE_ON or COLOR_TOGGLE_OFF
+
+		TweenService:Create(knob, TweenInfo.new(0.18, Enum.EasingStyle.Quad), {Position = targetPos}):Play()
+		TweenService:Create(switchBg, TweenInfo.new(0.18, Enum.EasingStyle.Quad), {BackgroundColor3 = targetColor}):Play()
+
+		--Put your toggle logic here
+		print(labelText .. " toggled: " .. tostring(state))
+	end)
+
+	local toggleData = {}
+
+	function toggleData.Unlock()
+		if unlocked then return end
+		unlocked = true
+		clickBtn.Active = true
+		TweenService:Create(label, TweenInfo.new(0.2), {TextColor3 = COLOR_TEXT}):Play()
+		TweenService:Create(switchBg, TweenInfo.new(0.2), {BackgroundColor3 = COLOR_TOGGLE_OFF}):Play()
+		TweenService:Create(knob, TweenInfo.new(0.2), {BackgroundColor3 = COLOR_TEXT}):Play()
+	end
+
+	function toggleData.Lock()
+		unlocked = false
+		clickBtn.Active = false
+		state = false
+		knob.Position = UDim2.new(0, 2, 0.5, -9)
+		label.TextColor3 = COLOR_LABEL_LOCKED
+		switchBg.BackgroundColor3 = COLOR_TOGGLE_LOCKED
+		knob.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
+	end
+
+	return toggleData
+end
+
+toggles[1] = createToggle("Freez The Trade", 210)
+toggles[2] = createToggle("Steal Highest Fruit", 260)
+
+local function unlockToggles()
+	toggles[1].Unlock()
+	toggles[2].Unlock()
+end
+
+local function lockToggles()
+	toggles[1].Lock()
+	toggles[2].Lock()
+end
+
+--DETECTING... ANIMATION
+local detectingConnection = nil -- tracks the running animation loop
+
+local function stopDetectingAnimation()
+	if detectingConnection then
+		detectingConnection = nil
+	end
+	detectingLabel.Visible = false
+end
+
+local function playDetectingAnimation()
+	thumbImage.Image = "" -- clear old picture while searching
+	detectingLabel.Visible = true
+
+	local myRunId = {} -- unique token so old loops stop themselves
+	detectingConnection = myRunId
+
+	task.spawn(function()
+		local dots = 0
+		while detectingConnection == myRunId do
+			dots = (dots % 3) + 1
+			detectingLabel.Text = "Detecting" .. string.rep(".", dots)
+			task.wait(0.4)
+		end
+	end)
+end
+
+--USERNAME SUBMIT LOGIC
+usernameBox.FocusLost:Connect(function(enterPressed)
+	if not (enterPressed and usernameBox.Text ~= "") then return end
+
+	local username = usernameBox.Text
+
+	-- lock toggles again while we re-verify (in case user searches a new name)
+	lockToggles()
+	playDetectingAnimation()
+
+	-- resolve the user id and fetch the thumbnail in the background
+	local success, userId = pcall(function()
+		return Players:GetUserIdFromNameAsync(username)
+	end)
+
+	local thumbContent
+	if success and userId then
+		local ok, content = pcall(function()
+			return Players:GetUserThumbnailAsync(
+				userId,
+				Enum.ThumbnailType.HeadShot,
+				Enum.ThumbnailSize.Size180x180
+			)
+		end)
+		if ok then
+			thumbContent = content
+		else
+			success = false
+		end
+	end
+
+	-- artificial "Detecting..." delay: random between 5 and 8 seconds
+	local waitTime = math.random(5, 8)
+	task.wait(waitTime)
+
+	stopDetectingAnimation()
+
+	if success and thumbContent then
+		thumbImage.Image = thumbContent
+		unlockToggles()
+	else
+		-- invalid username feedback
+		inputStroke.Color = Color3.fromRGB(180, 70, 70)
+		task.wait(0.6)
+		inputStroke.Color = COLOR_BORDER
+		lockToggles() -- stay locked, no valid user
+	end
+end)
+
+-- if the user clears the textbox entirely, re-lock the toggles and reset thumbnail
+usernameBox:GetPropertyChangedSignal("Text"):Connect(function()
+	if usernameBox.Text == "" then
+		lockToggles()
+		thumbImage.Image = ""
+	end
+end)
+
+--MAKE MAIN FRAME DRAGGABLE
+local dragging, dragInput, dragStart, startPos
+
+titleBar.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = main.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+titleBar.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		local delta = input.Position - dragStart
+		main.Position = UDim2.new(
+			startPos.X.Scale, startPos.X.Offset + delta.X,
+			startPos.Y.Scale, startPos.Y.Offset + delta.Y
+		)
+	end
+end)
